@@ -23,6 +23,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -31,10 +33,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import java.io.File
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -180,8 +182,10 @@ fun Ring(progress: Float, color: Color, label: String) {
     Box(Modifier.size(76.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(76.dp)) {
             val w = 7.dp.toPx()
-            drawArc(C.Stroke, 0f, 360f, false, topLeft = Offset(w / 2, w / 2), size = Size(size.width - w, size.height - w), style = androidx.compose.ui.graphics.drawscope.Stroke(w))
-            drawArc(color, -90f, 360f * progress.coerceIn(0f, 1f), false, topLeft = Offset(w / 2, w / 2), size = Size(size.width - w, size.height - w), style = androidx.compose.ui.graphics.drawscope.Stroke(w, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+            val tl = Offset(w / 2, w / 2)
+            val sz = Size(size.width - w, size.height - w)
+            drawArc(C.Stroke, 0f, 360f, false, tl, sz, style = Stroke(w))
+            drawArc(color, -90f, 360f * progress.coerceIn(0f, 1f), false, tl, sz, style = Stroke(w, cap = StrokeCap.Round))
         }
         Text(label, style = MaterialTheme.typography.titleMedium, color = C.Text)
     }
@@ -195,268 +199,90 @@ fun fmtDate(d: String): String = runCatching {
 }.getOrElse { d }
 
 @Composable
-fun HomeScreen(nav: androidx.navigation.NavHostController) {
-    val evs by Store.events.collectAsState()
-    val date = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))).replaceFirstChar { it.uppercase() }
-    Column(scrollMod()) {
-        Spacer(Modifier.height(12.dp))
-        Text("Привет, Гровер", style = MaterialTheme.typography.bodyMedium, color = C.Text2)
-        Text("GROWTRACKER", style = MaterialTheme.typography.headlineLarge, color = C.Lime)
-        Text(date, style = MaterialTheme.typography.bodySmall, color = C.Text2)
-        Spacer(Modifier.height(14.dp))
-        Header("Быстрые действия")
-        Row(Modifier.fillMaxWidth()) {
-            CircleBtn(R.drawable.ic_drop, "Полив", { nav.navigate("form/water/new") }, Modifier.weight(1f))
-            CircleBtn(R.drawable.ic_flask, "Компот", { nav.navigate("form/feed/new") }, Modifier.weight(1f))
-            CircleBtn(R.drawable.ic_spray, "Спрей", { nav.navigate("form/spray/new") }, Modifier.weight(1f))
-            CircleBtn(R.drawable.ic_pencil, "Заметка", { nav.navigate("form/note/new") }, Modifier.weight(1f))
-        }
-        Spacer(Modifier.height(14.dp))
-        Header("Растения", "Все записи") { nav.navigate("journal") { launchSingleTop = true } }
-        PLANTS.forEach { p ->
-            val last = evs.filter { it.plant == p.id && (it.type == "water" || it.type == "feed" || it.type == "flush") }.maxByOrNull { it.date }
-            val day = runCatching { java.time.temporal.ChronoUnit.DAYS.between(LocalDate.parse(p.flip), LocalDate.now()).toInt() }.getOrElse { 0 }
-            val next = runCatching { LocalDate.parse(last?.date ?: p.flip).plusDays(p.interval.toLong()).toString() }.getOrElse { "" }
-            BoxCard(Modifier.padding(bottom = 10.dp).clickable { nav.navigate("plants") }) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Ring(if (day > 0) day.toFloat() / p.max else 0f, p.color, if (day > 0) "$day" else "вега")
-                    Spacer(Modifier.width(14.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(p.name, style = MaterialTheme.typography.titleMedium, color = C.Text)
-                        Text("${p.gen} · ${p.pot} л · окно ${p.min}–${p.max} дн", style = MaterialTheme.typography.bodySmall, color = C.Text2)
-                        Spacer(Modifier.height(6.dp))
-                        val d = last?.delta
-                        if (d != null) Tag("Δ ${d.toInt()} ppm", deltaColor(last) ?: C.Green) else Tag("нет замеров", C.Text2)
-                    }
-                }
-                Spacer(Modifier.height(10.dp))
-                Text("Следующий полив: ${fmtDate(next)}", style = MaterialTheme.typography.bodyMedium, color = C.Yellow)
-            }
-        }
-        Spacer(Modifier.height(4.dp))
-        Header("Последние события", "Смотреть все") { nav.navigate("journal") { launchSingleTop = true } }
-        evs.sortedByDescending { it.date }.take(3).forEach { e ->
-            BoxCard(Modifier.padding(bottom = 8.dp).clickable { nav.navigate("form/${e.type}/${e.id}") }) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(9.dp).clip(CircleShape).background(plant(e.plant).color))
-                    Spacer(Modifier.width(8.dp))
-                    Text("${plant(e.plant).name} · ${typeName(e.type)}", style = MaterialTheme.typography.bodyLarge, color = C.Text, modifier = Modifier.weight(1f))
-                    Text(fmtDate(e.date), style = MaterialTheme.typography.bodySmall, color = C.Text2)
-                }
-                if (e.inP != null || e.outP != null) {
-                    Spacer(Modifier.height(6.dp))
-                    Text("${e.inP?.toInt() ?: "—"} → ${e.outP?.toInt() ?: "—"} ppm", style = MaterialTheme.typography.bodyMedium, color = C.Text2)
-                }
-            }
-        }
-        Spacer(Modifier.height(110.dp))
+fun BackBar(title: String, onBack: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_arrow_left), "Назад", tint = C.Text) }
+        Text(title, style = MaterialTheme.typography.headlineMedium, color = C.Text)
     }
 }
 
 @Composable
-fun PlantsScreen() {
-    val evs by Store.events.collectAsState()
-    Column(scrollMod()) {
-        Spacer(Modifier.height(12.dp))
-        Text("РАСТЕНИЯ", style = MaterialTheme.typography.headlineLarge, color = C.Text)
-        Spacer(Modifier.height(12.dp))
-        PLANTS.forEach { p ->
-            val list = evs.filter { it.plant == p.id }
-            val day = runCatching { java.time.temporal.ChronoUnit.DAYS.between(LocalDate.parse(p.flip), LocalDate.now()).toInt() }.getOrElse { 0 }
-            val harvestA = runCatching { LocalDate.parse(p.flip).plusDays(p.min.toLong()).toString() }.getOrElse { "" }
-            val harvestB = runCatching { LocalDate.parse(p.flip).plusDays(p.max.toLong()).toString() }.getOrElse { "" }
-            BoxCard(Modifier.padding(bottom = 12.dp)) {
-                Text(p.name, style = MaterialTheme.typography.headlineMedium, color = p.color)
-                Text("${p.gen} · горшок ${p.pot} л", style = MaterialTheme.typography.bodyMedium, color = C.Text2)
-                Spacer(Modifier.height(10.dp))
-                Row {
-                    Ring(if (day > 0) day.toFloat() / p.max else 0f, p.color, if (day > 0) "$day" else "0")
-                    Spacer(Modifier.width(14.dp))
-                    Column {
-                        Text("Перевод на 12/12: ${fmtDate(p.flip)}", style = MaterialTheme.typography.bodyMedium, color = C.Text)
-                        Text("Окно харвеста: ${fmtDate(harvestA)} — ${fmtDate(harvestB)}", style = MaterialTheme.typography.bodyMedium, color = C.Text)
-                        Text("Интервал полива: ${p.interval} дня", style = MaterialTheme.typography.bodyMedium, color = C.Text2)
-                        Text("Записей в журнале: ${list.size}", style = MaterialTheme.typography.bodyMedium, color = C.Text2)
-                    }
-                }
-            }
-        }
-        Spacer(Modifier.height(24.dp))
-    }
-}
-
-@Composable
-fun CatalogScreen() {
-    Column(scrollMod()) {
-        Spacer(Modifier.height(12.dp))
-        Text("КАТАЛОГ", style = MaterialTheme.typography.headlineLarge, color = C.Text)
-        Text("Дозы по умолчанию и вклад в PPM", style = MaterialTheme.typography.bodySmall, color = C.Text2)
-        Spacer(Modifier.height(12.dp))
-        FERTS.groupBy { it.cat }.forEach { (cat, list) ->
-            Header(cat)
-            list.forEach { f ->
-                BoxCard(Modifier.padding(bottom = 8.dp)) {
-                    Text(f.name, style = MaterialTheme.typography.bodyLarge, color = C.Text)
+fun BottomBar(current: String?, onTab: (String) -> Unit) {
+    val tabs = listOf(
+        Triple("home", "Главная", R.drawable.ic_home),
+        Triple("journal", "Журнал", R.drawable.ic_journal),
+        Triple("calendar", "Календарь", R.drawable.ic_calendar),
+        Triple("charts", "Графики", R.drawable.ic_chart),
+        Triple("menu", "Меню", R.drawable.ic_menu)
+    )
+    Column(Modifier.fillMaxWidth().background(C.Surface)) {
+        Spacer(Modifier.fillMaxWidth().height(1.dp).background(C.Stroke))
+        Row(Modifier.fillMaxWidth().navigationBarsPadding().height(62.dp)) {
+            tabs.forEach { t ->
+                val sel = t.first == current
+                Column(Modifier.weight(1f).fillMaxHeight().clickable { onTab(t.first) }.padding(top = 9.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(painterResource(t.third), t.second, tint = if (sel) C.Lime else C.Text2, modifier = Modifier.size(23.dp))
                     Spacer(Modifier.height(4.dp))
-                    Row {
-                        Tag("${f.dose} мл/л", C.Lime)
-                        Spacer(Modifier.width(6.dp))
-                        Tag(if (f.ppm > 0) "+${f.ppm.toInt()} ppm" else "вклад не задан", if (f.ppm > 0) C.Purple else C.Text2)
-                    }
+                    Text(t.second, style = MaterialTheme.typography.labelSmall, color = if (sel) C.Lime else C.Text2, maxLines = 1)
                 }
             }
         }
-        Spacer(Modifier.height(24.dp))
     }
 }
 
 @Composable
-fun DiaryScreen(nav: androidx.navigation.NavHostController) {
-    val evs by Store.events.collectAsState()
-    val list = evs.filter { it.err || it.type == "note" }.sortedByDescending { it.date }
-    Column(scrollMod()) {
-        Spacer(Modifier.height(12.dp))
-        Text("ДНЕВНИК", style = MaterialTheme.typography.headlineLarge, color = C.Text)
-        Text("Ошибки и заметки: ${list.size}", style = MaterialTheme.typography.bodySmall, color = C.Text2)
-        Spacer(Modifier.height(12.dp))
-        list.forEach { e ->
-            BoxCard(Modifier.padding(bottom = 10.dp).clickable { nav.navigate("form/${e.type}/${e.id}") }) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(plant(e.plant).name, style = MaterialTheme.typography.titleMedium, color = plant(e.plant).color, modifier = Modifier.weight(1f))
-                    if (e.err) Tag("ОШИБКА", C.Red)
+fun App() {
+    val nav = rememberNavController()
+    val entry by nav.currentBackStackEntryAsState()
+    val route = entry?.destination?.route
+    val tabs = listOf("home", "journal", "calendar", "charts", "menu")
+    val isTab = route != null && tabs.contains(route)
+    Glow {
+        Scaffold(
+            containerColor = Color.Transparent,
+            contentColor = C.Text,
+            snackbarHost = {
+                SnackbarHost(Snack) { data ->
+                    Snackbar(snackbarData = data, containerColor = C.Surface2, contentColor = C.Text, actionColor = C.Lime)
                 }
-                Text(fmtDate(e.date), style = MaterialTheme.typography.bodySmall, color = C.Text2)
-                Spacer(Modifier.height(6.dp))
-                Text(e.note, style = MaterialTheme.typography.bodyMedium, color = C.Text)
-            }
-        }
-        Spacer(Modifier.height(24.dp))
-    }
-}
-
-@Composable
-fun SettingsScreen() {
-    val tds by Store.tds.collectAsState()
-    Column(scrollMod()) {
-        Spacer(Modifier.height(12.dp))
-        Text("НАСТРОЙКИ", style = MaterialTheme.typography.headlineLarge, color = C.Text)
-        Spacer(Modifier.height(12.dp))
-        Header("Шкала TDS")
-        BoxCard {
-            Text("EC = PPM / шкала. Влияет на все пересчёты в форме и журнале.", style = MaterialTheme.typography.bodySmall, color = C.Text2)
-            Spacer(Modifier.height(10.dp))
-            Row {
-                Chip("500 (EU)", tds == 500, { Store.setTds(500) })
-                Spacer(Modifier.width(8.dp))
-                Chip("700 (US)", tds == 700, { Store.setTds(700) })
-            }
-            Spacer(Modifier.height(10.dp))
-            Text("600 ppm = ${"%.2f".format(600.0 / tds)} mS/cm", style = MaterialTheme.typography.bodyLarge, color = C.Lime)
-        }
-        Spacer(Modifier.height(12.dp))
-        Header("Пороги дельты")
-        BoxCard {
-            Row { Tag("до 250 — норма", C.Green); Spacer(Modifier.width(6.dp)); Tag("250–300 — внимание", C.Yellow) }
-            Spacer(Modifier.height(8.dp))
-            Row { Tag("больше 300 — засол", C.Red); Spacer(Modifier.width(6.dp)); Tag("выход 800+ — вода", C.Red) }
-        }
-        Spacer(Modifier.height(12.dp))
-        Header("Данные")
-        BoxCard {
-            val e by Store.events.collectAsState()
-            Text("Записей на устройстве: ${e.size}", style = MaterialTheme.typography.bodyLarge, color = C.Text)
-            Text("Хранение: внутренний файл приложения, без облака.", style = MaterialTheme.typography.bodySmall, color = C.Text2)
-        }
-        Spacer(Modifier.height(24.dp))
-    }
-}
-
-@Composable
-fun AboutScreen() {
-    Column(scrollMod()) {
-        Spacer(Modifier.height(12.dp))
-        Text("О ПРИЛОЖЕНИИ", style = MaterialTheme.typography.headlineLarge, color = C.Text)
-        Spacer(Modifier.height(12.dp))
-        BoxCard {
-            Text("GrowTracker 0.2.0", style = MaterialTheme.typography.headlineMedium, color = C.Lime)
-            Text("Algorythm Studio", style = MaterialTheme.typography.bodyMedium, color = C.Text2)
-            Spacer(Modifier.height(10.dp))
-            Text("Офлайн-трекер поливов, питания и стадий роста. Все данные хранятся только на телефоне. Интернет приложению не нужен.", style = MaterialTheme.typography.bodyMedium, color = C.Text)
-            Spacer(Modifier.height(10.dp))
-            Text("Заголовки: Space Grotesk (замена Cy Grotesk Grand). Текст: Montserrat. Лицензии SIL OFL.", style = MaterialTheme.typography.bodySmall, color = C.Text2)
-        }
-        Spacer(Modifier.height(24.dp))
-    }
-}
-
-@Composable
-fun ChartsScreen() {
-    val evs by Store.events.collectAsState()
-    var pid by remember { mutableStateOf("big") }
-    val data = evs.filter { it.plant == pid && it.inP != null && it.outP != null }.sortedBy { it.date }.takeLast(14)
-    Column(scrollMod()) {
-        Spacer(Modifier.height(12.dp))
-        Text("ГРАФИКИ", style = MaterialTheme.typography.headlineLarge, color = C.Text)
-        Spacer(Modifier.height(10.dp))
-        Row {
-            PLANTS.forEach { p ->
-                Chip(p.name, pid == p.id, { pid = p.id }, p.color)
-                Spacer(Modifier.width(8.dp))
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        BoxCard {
-            Row { Tag("вход", C.Lime); Spacer(Modifier.width(6.dp)); Tag("выход", C.Purple); Spacer(Modifier.width(6.dp)); Tag("дельта", C.Yellow) }
-            Spacer(Modifier.height(12.dp))
-            if (data.size < 2) {
-                Text("Недостаточно замеров для графика", style = MaterialTheme.typography.bodyMedium, color = C.Text2)
-            } else {
-                Canvas(Modifier.fillMaxWidth().height(160.dp)) {
-                    val maxV = 1000f
-                    val step = size.width / (data.size - 1)
-                    fun y(v: Double) = size.height - (v.toFloat() / maxV * size.height).coerceIn(0f, size.height)
-                    for (g in 0..4) {
-                        val gy = size.height * g / 4
-                        drawLine(C.Stroke, Offset(0f, gy), Offset(size.width, gy), 1f)
-                    }
-                    for (i in 0 until data.size - 1) {
-                        val x1 = step * i; val x2 = step * (i + 1)
-                        drawLine(C.Lime, Offset(x1, y(data[i].inP!!)), Offset(x2, y(data[i + 1].inP!!)), 3f)
-                        drawLine(C.Purple, Offset(x1, y(data[i].outP!!)), Offset(x2, y(data[i + 1].outP!!)), 3f)
-                    }
-                    data.forEachIndexed { i, e ->
-                        val x = step * i
-                        drawCircle(C.Lime, 4f, Offset(x, y(e.inP!!)))
-                        drawCircle(C.Purple, 4f, Offset(x, y(e.outP!!)))
+            },
+            bottomBar = {
+                if (isTab) BottomBar(route) { r ->
+                    nav.navigate(r) {
+                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
                     }
                 }
-                Spacer(Modifier.height(12.dp))
-                Canvas(Modifier.fillMaxWidth().height(70.dp)) {
-                    val bw = size.width / data.size
-                    data.forEachIndexed { i, e ->
-                        val d = (e.delta ?: 0.0).toFloat().coerceAtLeast(0f)
-                        val h = (d / 500f * size.height).coerceIn(2f, size.height)
-                        drawRect(deltaColor(e) ?: C.Green, Offset(bw * i + 2f, size.height - h), Size(bw - 4f, h))
-                    }
+            },
+            floatingActionButton = {
+                if (route == "home" || route == "journal") Pill("+ Событие") { nav.navigate("form/water/new") }
+            }
+        ) { pad ->
+            NavHost(nav, startDestination = "home", modifier = Modifier.padding(pad)) {
+                composable("home") { HomeScreen(nav) }
+                composable("journal") { JournalScreen(nav) }
+                composable("calendar") { CalendarScreen(nav) }
+                composable("charts") { ChartsScreen() }
+                composable("menu") { MenuScreen(nav) }
+                composable("plants") { PlantsScreen(nav) }
+                composable("catalog") { CatalogScreen(nav) }
+                composable("diary") { DiaryScreen(nav) }
+                composable("settings") { SettingsScreen(nav) }
+                composable("about") { AboutScreen(nav) }
+                composable("form/{type}/{id}") { back ->
+                    EventForm(nav, back.arguments?.getString("type") ?: "water", back.arguments?.getString("id") ?: "new")
                 }
-                Spacer(Modifier.height(8.dp))
-                Text("${fmtDate(data.first().date)} — ${fmtDate(data.last().date)} · ${data.size} замеров", style = MaterialTheme.typography.bodySmall, color = C.Text2)
             }
         }
-        Spacer(Modifier.height(24.dp))
     }
 }
 
-@Composable
-fun CalendarScreen(nav: androidx.navigation.NavHostController) {
-    val evs by Store.events.collectAsState()
-    val today = LocalDate.now()
-    var ym by remember { mutableStateOf(YearMonth.from(today)) }
-    var sel by remember { mutableStateOf(today.toString()) }
-    val first = ym.atDay(1)
-    val shift = first.dayOfWeek.value - 1
-    val days = ym.lengthOfMonth()
-    val dayList = evs.filter { it.date == sel }.sortedBy { it.type }
-    Column(scrollMod()) {
-        Spacer(Modifier.height(12.dp))
-        Text("КАЛЕНДАРЬ", style = MaterialTheme.typography.headlineLarge, color = C
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+        Store.init(File(filesDir, "growtracker.json"))
+        setContent { AppTheme { App() } }
+    }
+}
