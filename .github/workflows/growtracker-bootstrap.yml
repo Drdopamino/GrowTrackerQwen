@@ -530,7 +530,7 @@ jobs:
 
       - name: Show error
         if: failure()
-        run: grep -E "^e: |error:|What went wrong|Caused by|Execution failed|Could not|SDK location" build.log | head -30
+        run: 'grep -E "^e: |error:|What went wrong|Caused by|Execution failed|Could not|SDK location" build.log | head -30'
 
       - uses: actions/upload-artifact@v4
         with:
