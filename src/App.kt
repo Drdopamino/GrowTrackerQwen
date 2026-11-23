@@ -256,7 +256,7 @@ fun App() {
                 }
             },
             floatingActionButton = {
-                if (route == "home" || route == "journal") Pill("+ Событие") { nav.navigate("form/water/new") }
+                if (route == "home" || route == "journal") Pill("+ Событие", { nav.navigate("form/water/new") })
             }
         ) { pad ->
             NavHost(nav, startDestination = "home", modifier = Modifier.padding(pad)) {
