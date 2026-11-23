@@ -808,7 +808,7 @@ jobs:
               return { Toast.makeText(ctx, "Раздел подключается на этапе $stage", Toast.LENGTH_SHORT).show() }
           }
 
-          private fun screenModifier() = Modifier
+          @Composable private fun screenModifier() = Modifier
               .fillMaxSize()
               .verticalScroll(rememberScrollState())
               .padding(horizontal = 16.dp)
