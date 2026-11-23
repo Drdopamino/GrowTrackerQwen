@@ -1008,7 +1008,7 @@ jobs:
         with:
           gradle-version: '8.9'
 
-            - name: Apply fix
+      - name: Apply fix
         run: |
           sed -i 's/^private fun screenModifier()/@Composable private fun screenModifier()/' app/src/main/java/com/algorythmstudio/growtracker/ui/screens/Screens.kt
           grep -n "screenModifier" app/src/main/java/com/algorythmstudio/growtracker/ui/screens/Screens.kt
