@@ -15,7 +15,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
@@ -25,18 +24,17 @@ jobs:
           mkdir -p app/src/main/res/font
           curl -fsSL -o app/src/main/res/font/montserrat_variable.ttf 'https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/Montserrat%5Bwght%5D.ttf'
           curl -fsSL -o app/src/main/res/font/spacegrotesk_variable.ttf 'https://raw.githubusercontent.com/google/fonts/main/ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf'
-          ls -l app/src/main/res/font
 
       - name: Project
         run: |
           set -e
           cat > settings.gradle.kts <<'EOF'
           pluginManagement {
-              repositories { google(); mavenCentral(); gradlePluginPortal() }
+              repositories { google(); maven("https://maven-central.storage-download.googleapis.com/maven2/"); mavenCentral(); gradlePluginPortal() }
           }
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories { google(); mavenCentral() }
+              repositories { google(); maven("https://maven-central.storage-download.googleapis.com/maven2/"); mavenCentral() }
           }
           rootProject.name = "GrowTracker"
           include(":app")
@@ -70,8 +68,8 @@ jobs:
                   applicationId = "com.algorythmstudio.growtracker"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 1
-                  versionName = "0.1.0"
+                  versionCode = 2
+                  versionName = "0.2.0"
               }
               compileOptions {
                   sourceCompatibility = JavaVersion.VERSION_17
@@ -96,7 +94,6 @@ jobs:
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
               <application
                   android:allowBackup="false"
                   android:icon="@mipmap/ic_launcher"
@@ -194,333 +191,15 @@ jobs:
           icon ic_leaf 'M19.4,4.6 C10.6,4.6 4.8,10.4 4.6,19.4 C13.6,19.4 19.4,13.6 19.4,4.6 Z M4.6,19.4 C8.2,13.4 12.6,9.2 16.8,6.8'
           icon ic_flask 'M9.4,3.4 H14.6 M10.6,3.4 V9 L5.6,17.6 A1.9,1.9 0 0 0 7.3,20.4 H16.7 A1.9,1.9 0 0 0 18.4,17.6 L13.4,9 V3.4 M7.6,14.6 H16.4'
           icon ic_pencil 'M16.7,4.1 A2.45,2.45 0 0 1 20.2,7.6 L7.6,20.2 L3.4,21.2 L4.4,17 Z M14.6,6.2 L18.1,9.7'
-          icon ic_robot 'M6.2,8.6 H17.8 A1.7,1.7 0 0 1 19.5,10.3 V16.3 A1.7,1.7 0 0 1 17.8,18 H6.2 A1.7,1.7 0 0 1 4.5,16.3 V10.3 A1.7,1.7 0 0 1 6.2,8.6 Z M12,8.6 V6.2 M12,4.9 A1.3,1.3 0 1 0 12,2.3 A1.3,1.3 0 1 0 12,4.9 M9.2,12.4 L9.21,12.4 M14.8,12.4 L14.81,12.4 M9.6,15.4 H14.4'
-          icon ic_save 'M12,4 V14 M8,10.5 L12,14.5 L16,10.5 M4.5,16.5 V18 A1.8,1.8 0 0 0 6.3,19.8 H17.7 A1.8,1.8 0 0 0 19.5,18 V16.5'
           icon ic_gear 'M18.46,10.21 L18.63,11.01 L21.29,10.94 L21.29,13.06 L18.63,12.99 L18.46,13.79 L17.83,15.30 L17.39,15.99 L19.32,17.82 L17.82,19.32 L15.99,17.39 L15.30,17.83 L13.79,18.46 L12.99,18.63 L13.06,21.29 L10.94,21.29 L11.01,18.63 L10.21,18.46 L8.70,17.83 L8.01,17.39 L6.18,19.32 L4.68,17.82 L6.61,15.99 L6.17,15.30 L5.54,13.79 L5.37,12.99 L2.71,13.06 L2.71,10.94 L5.37,11.01 L5.54,10.21 L6.17,8.70 L6.61,8.01 L4.68,6.18 L6.18,4.68 L8.01,6.61 L8.70,6.17 L10.21,5.54 L11.01,5.37 L10.94,2.71 L13.06,2.71 L12.99,5.37 L13.79,5.54 L15.30,6.17 L15.99,6.61 L17.82,4.68 L19.32,6.18 L17.39,8.01 L17.83,8.70 Z M12,8.9 A3.1,3.1 0 1 0 12,15.1 A3.1,3.1 0 1 0 12,8.9'
           icon ic_note 'M13.6,3.6 H6.6 A1.8,1.8 0 0 0 4.8,5.4 V18.6 A1.8,1.8 0 0 0 6.6,20.4 H17.4 A1.8,1.8 0 0 0 19.2,18.6 V9.2 Z M13.6,3.6 V9.2 H19.2 M8.6,13 H15.4 M8.6,16.4 H13'
           icon ic_arrow_right 'M5.5,12 H18 M13.2,6.8 L18.4,12 L13.2,17.2'
           icon ic_arrow_left 'M18.5,12 H6 M10.8,6.8 L5.6,12 L10.8,17.2'
+          icon ic_trash 'M4.6,6.6 H19.4 M9.2,6.6 V5.2 A1.6,1.6 0 0 1 10.8,3.6 H13.2 A1.6,1.6 0 0 1 14.8,5.2 V6.6 M6.6,6.6 L7.4,18.5 A1.9,1.9 0 0 0 9.3,20.3 H14.7 A1.9,1.9 0 0 0 16.6,18.5 L17.4,6.6 M10.1,10.4 V16.4 M13.9,10.4 V16.4'
 
           mkdir -p app/src/main/java/com/algorythmstudio/growtracker
-          cat > app/src/main/java/com/algorythmstudio/growtracker/MainActivity.kt <<'EOF'
-          package com.algorythmstudio.growtracker
-
-          import android.os.Bundle
-          import android.widget.Toast
-          import androidx.activity.ComponentActivity
-          import androidx.activity.compose.setContent
-          import androidx.activity.enableEdgeToEdge
-          import androidx.compose.foundation.background
-          import androidx.compose.foundation.border
-          import androidx.compose.foundation.clickable
-          import androidx.compose.foundation.layout.*
-          import androidx.compose.foundation.rememberScrollState
-          import androidx.compose.foundation.shape.CircleShape
-          import androidx.compose.foundation.shape.RoundedCornerShape
-          import androidx.compose.foundation.verticalScroll
-          import androidx.compose.material3.*
-          import androidx.compose.runtime.*
-          import androidx.compose.ui.Alignment
-          import androidx.compose.ui.Modifier
-          import androidx.compose.ui.draw.clip
-          import androidx.compose.ui.draw.drawBehind
-          import androidx.compose.ui.geometry.Offset
-          import androidx.compose.ui.graphics.Brush
-          import androidx.compose.ui.graphics.Color
-          import androidx.compose.ui.platform.LocalContext
-          import androidx.compose.ui.res.painterResource
-          import androidx.compose.ui.text.TextStyle
-          import androidx.compose.ui.text.font.Font
-          import androidx.compose.ui.text.font.FontFamily
-          import androidx.compose.ui.text.font.FontWeight
-          import androidx.compose.ui.unit.dp
-          import androidx.compose.ui.unit.sp
-          import androidx.navigation.NavGraph.Companion.findStartDestination
-          import androidx.navigation.compose.*
-          import java.time.LocalDate
-          import java.time.format.DateTimeFormatter
-          import java.util.Locale
-
-          object C {
-              val Bg = Color(0xFF141414)
-              val Surface = Color(0xFF1E1E1E)
-              val Surface2 = Color(0xFF262626)
-              val Stroke = Color(0xFF333333)
-              val Text = Color(0xFFFFFFFF)
-              val Text2 = Color(0xFF8C8C8C)
-              val Lime = Color(0xFFB4F000)
-              val OnLime = Color(0xFF141414)
-              val Purple = Color(0xFF8B7BF7)
-              val Yellow = Color(0xFFF7C948)
-              val Red = Color(0xFFFF5A5A)
-          }
-
-          private val Head = FontFamily(Font(R.font.cy_grotesk_grand, FontWeight.Bold))
-          private val Body = FontFamily(
-              Font(R.font.montserrat, FontWeight.Normal),
-              Font(R.font.montserrat, FontWeight.Medium),
-              Font(R.font.montserrat, FontWeight.SemiBold)
-          )
-
-          private val Typo = Typography(
-              headlineLarge = TextStyle(fontFamily = Head, fontWeight = FontWeight.Bold, fontSize = 32.sp, lineHeight = 36.sp),
-              headlineMedium = TextStyle(fontFamily = Head, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 26.sp),
-              headlineSmall = TextStyle(fontFamily = Head, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 22.sp),
-              titleMedium = TextStyle(fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 22.sp),
-              bodyLarge = TextStyle(fontFamily = Body, fontSize = 16.sp, lineHeight = 22.sp),
-              bodyMedium = TextStyle(fontFamily = Body, fontSize = 14.sp, lineHeight = 20.sp),
-              bodySmall = TextStyle(fontFamily = Body, fontSize = 12.sp, lineHeight = 16.sp),
-              labelLarge = TextStyle(fontFamily = Body, fontWeight = FontWeight.SemiBold, fontSize = 14.sp),
-              labelSmall = TextStyle(fontFamily = Body, fontWeight = FontWeight.Medium, fontSize = 11.sp)
-          )
-
-          @Composable
-          fun AppTheme(content: @Composable () -> Unit) {
-              MaterialTheme(
-                  colorScheme = darkColorScheme(
-                      primary = C.Lime, onPrimary = C.OnLime, background = C.Bg, onBackground = C.Text,
-                      surface = C.Surface, onSurface = C.Text, surfaceVariant = C.Surface2,
-                      onSurfaceVariant = C.Text2, outline = C.Stroke, error = C.Red,
-                      secondary = C.Purple, tertiary = C.Yellow
-                  ),
-                  typography = Typo,
-                  shapes = Shapes(
-                      extraSmall = RoundedCornerShape(12.dp), small = RoundedCornerShape(16.dp),
-                      medium = RoundedCornerShape(20.dp), large = RoundedCornerShape(24.dp),
-                      extraLarge = RoundedCornerShape(28.dp)
-                  ),
-                  content = content
-              )
-          }
-
-          @Composable
-          fun Glow(content: @Composable BoxScope.() -> Unit) {
-              Box(Modifier.fillMaxSize().background(C.Bg).drawBehind {
-                  drawRect(
-                      brush = Brush.radialGradient(
-                          colors = listOf(C.Lime.copy(alpha = 0.20f), C.Lime.copy(alpha = 0.05f), Color.Transparent),
-                          center = Offset(size.width * 0.10f, size.height * 1.02f),
-                          radius = size.maxDimension * 0.9f
-                      )
-                  )
-              }, content = content)
-          }
-
-          @Composable
-          fun Pill(text: String, onClick: () -> Unit) {
-              Row(
-                  Modifier.height(54.dp).clip(CircleShape).background(C.Lime).clickable(onClick = onClick).padding(start = 6.dp, end = 22.dp),
-                  verticalAlignment = Alignment.CenterVertically
-              ) {
-                  Box(Modifier.size(42.dp).clip(CircleShape).background(C.OnLime), contentAlignment = Alignment.Center) {
-                      Icon(painterResource(R.drawable.ic_arrow_right), null, tint = C.Lime, modifier = Modifier.size(20.dp))
-                  }
-                  Spacer(Modifier.width(12.dp))
-                  Text(text, style = MaterialTheme.typography.labelLarge, color = C.OnLime)
-              }
-          }
-
-          @Composable
-          fun CircleBtn(icon: Int, label: String, onClick: () -> Unit, mod: Modifier = Modifier) {
-              Column(mod.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                  Box(Modifier.size(52.dp).clip(CircleShape).border(1.5.dp, C.Text.copy(alpha = 0.75f), CircleShape), contentAlignment = Alignment.Center) {
-                      Icon(painterResource(icon), label, tint = C.Text, modifier = Modifier.size(24.dp))
-                  }
-                  Spacer(Modifier.height(6.dp))
-                  Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = C.Text2, maxLines = 1)
-              }
-          }
-
-          @Composable
-          fun BoxCard(mod: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-              val s = RoundedCornerShape(20.dp)
-              Column(mod.fillMaxWidth().clip(s).background(C.Surface).border(1.dp, C.Stroke, s).padding(16.dp), content = content)
-          }
-
-          @Composable
-          fun Header(title: String, action: String? = null, onAction: (() -> Unit)? = null) {
-              Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                  Text(title.uppercase(), style = MaterialTheme.typography.headlineSmall, color = C.Text, modifier = Modifier.weight(1f))
-                  if (action != null && onAction != null) {
-                      Text(action, style = MaterialTheme.typography.labelLarge, color = C.Lime, modifier = Modifier.clickable(onClick = onAction).padding(6.dp))
-                  }
-              }
-          }
-
-          @Composable
-          fun Empty(icon: Int, title: String, sub: String) {
-              BoxCard {
-                  Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                      Icon(painterResource(icon), null, tint = C.Text2, modifier = Modifier.size(28.dp))
-                      Column {
-                          Text(title, style = MaterialTheme.typography.titleMedium, color = C.Text)
-                          Spacer(Modifier.height(4.dp))
-                          Text(sub, style = MaterialTheme.typography.bodySmall, color = C.Text2)
-                      }
-                  }
-              }
-          }
-
-          @Composable
-          fun scrollMod(): Modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)
-
-          @Composable
-          fun HomeScreen(onSeeAll: () -> Unit) {
-              val ctx = LocalContext.current
-              val soon: (Int) -> Unit = { n -> Toast.makeText(ctx, "Раздел подключается на этапе $n", Toast.LENGTH_SHORT).show() }
-              val date = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("ru"))).replaceFirstChar { it.uppercase() }
-              Column(scrollMod()) {
-                  Spacer(Modifier.height(12.dp))
-                  Text("Привет, Гровер", style = MaterialTheme.typography.bodyMedium, color = C.Text2)
-                  Text("GROWTRACKER", style = MaterialTheme.typography.headlineLarge, color = C.Lime)
-                  Text(date, style = MaterialTheme.typography.bodySmall, color = C.Text2)
-                  Spacer(Modifier.height(16.dp))
-                  Header("Быстрые действия")
-                  Row(Modifier.fillMaxWidth()) {
-                      CircleBtn(R.drawable.ic_drop, "Полив", { soon(2) }, Modifier.weight(1f))
-                      CircleBtn(R.drawable.ic_spray, "Спрей", { soon(2) }, Modifier.weight(1f))
-                      CircleBtn(R.drawable.ic_flask, "Раствор", { soon(5) }, Modifier.weight(1f))
-                      CircleBtn(R.drawable.ic_pencil, "Заметка", { soon(5) }, Modifier.weight(1f))
-                  }
-                  Spacer(Modifier.height(16.dp))
-                  Header("Растения")
-                  Empty(R.drawable.ic_leaf, "Пока пусто", "Этап 2: Большой (сатива, 15 л) и Малый (индика, 10 л), паспорта и стадии.")
-                  Spacer(Modifier.height(16.dp))
-                  Header("Дельта и полив", "Смотреть все", onSeeAll)
-                  Empty(R.drawable.ic_chart, "Данных ещё нет", "Этапы 2-3: дельта последнего полива и карточка следующего полива.")
-                  Spacer(Modifier.height(96.dp))
-              }
-          }
-
-          @Composable
-          fun SimpleScreen(title: String, icon: Int, sub: String) {
-              Column(scrollMod()) {
-                  Spacer(Modifier.height(12.dp))
-                  Text(title, style = MaterialTheme.typography.headlineLarge, color = C.Text)
-                  Spacer(Modifier.height(16.dp))
-                  Empty(icon, "Раздел подключается", sub)
-                  Spacer(Modifier.height(96.dp))
-              }
-          }
-
-          @Composable
-          fun MenuScreen() {
-              val ctx = LocalContext.current
-              val items = listOf(
-                  Triple(R.drawable.ic_leaf, "Растения", 2),
-                  Triple(R.drawable.ic_flask, "Каталог удобрений", 5),
-                  Triple(R.drawable.ic_drop, "Калькулятор компота", 5),
-                  Triple(R.drawable.ic_pencil, "Дневник и ошибки", 5),
-                  Triple(R.drawable.ic_robot, "ИИ-ассистент", 7),
-                  Triple(R.drawable.ic_save, "Бэкап и восстановление", 6),
-                  Triple(R.drawable.ic_gear, "Настройки", 6),
-                  Triple(R.drawable.ic_note, "О приложении", 6)
-              )
-              Column(scrollMod()) {
-                  Spacer(Modifier.height(12.dp))
-                  Text("МЕНЮ", style = MaterialTheme.typography.headlineLarge, color = C.Text)
-                  Spacer(Modifier.height(16.dp))
-                  items.forEach { item ->
-                      BoxCard(Modifier.padding(bottom = 10.dp).clip(RoundedCornerShape(20.dp)).clickable {
-                          Toast.makeText(ctx, "Раздел подключается на этапе ${item.third}", Toast.LENGTH_SHORT).show()
-                      }) {
-                          Row(verticalAlignment = Alignment.CenterVertically) {
-                              Icon(painterResource(item.first), null, tint = C.Lime, modifier = Modifier.size(24.dp))
-                              Spacer(Modifier.width(14.dp))
-                              Text(item.second, style = MaterialTheme.typography.bodyLarge, color = C.Text, modifier = Modifier.weight(1f))
-                              Text("этап ${item.third}", style = MaterialTheme.typography.labelSmall, color = C.Text2)
-                          }
-                      }
-                  }
-                  Text("GrowTracker v0.1.0 - Algorythm Studio", style = MaterialTheme.typography.bodySmall, color = C.Text2, modifier = Modifier.padding(bottom = 24.dp))
-              }
-          }
-
-          @Composable
-          fun EventScreen(onBack: () -> Unit) {
-              Column(scrollMod()) {
-                  Spacer(Modifier.height(8.dp))
-                  Row(verticalAlignment = Alignment.CenterVertically) {
-                      IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_arrow_left), "Назад", tint = C.Text) }
-                      Text("НОВОЕ СОБЫТИЕ", style = MaterialTheme.typography.headlineMedium, color = C.Text)
-                  }
-                  Spacer(Modifier.height(16.dp))
-                  Empty(R.drawable.ic_flask, "Форма события - этап 2", "Тип, растение, объём, PPM и EC, pH, дельта-бейдж, удобрения и фото.")
-                  Spacer(Modifier.height(24.dp))
-              }
-          }
-
-          @Composable
-          fun BottomBar(current: String?, onTab: (String) -> Unit) {
-              val tabs = listOf(
-                  Triple("home", "Главная", R.drawable.ic_home),
-                  Triple("journal", "Журнал", R.drawable.ic_journal),
-                  Triple("calendar", "Календарь", R.drawable.ic_calendar),
-                  Triple("charts", "Графики", R.drawable.ic_chart),
-                  Triple("menu", "Меню", R.drawable.ic_menu)
-              )
-              Column(Modifier.fillMaxWidth().background(C.Surface)) {
-                  Spacer(Modifier.fillMaxWidth().height(1.dp).background(C.Stroke))
-                  Row(Modifier.fillMaxWidth().navigationBarsPadding().height(64.dp)) {
-                      tabs.forEach { t ->
-                          val sel = t.first == current
-                          Column(
-                              Modifier.weight(1f).fillMaxHeight().clickable { onTab(t.first) }.padding(top = 9.dp),
-                              horizontalAlignment = Alignment.CenterHorizontally
-                          ) {
-                              Icon(painterResource(t.third), t.second, tint = if (sel) C.Lime else C.Text2, modifier = Modifier.size(24.dp))
-                              Spacer(Modifier.height(4.dp))
-                              Text(t.second, style = MaterialTheme.typography.labelSmall, color = if (sel) C.Lime else C.Text2, maxLines = 1)
-                          }
-                      }
-                  }
-              }
-          }
-
-          @Composable
-          fun App() {
-              val nav = rememberNavController()
-              val entry by nav.currentBackStackEntryAsState()
-              val route = entry?.destination?.route
-              val isTab = route == "home" || route == "journal" || route == "calendar" || route == "charts" || route == "menu"
-              Glow {
-                  Scaffold(
-                      containerColor = Color.Transparent,
-                      contentColor = C.Text,
-                      bottomBar = {
-                          if (isTab) BottomBar(route) { r ->
-                              nav.navigate(r) {
-                                  popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                  launchSingleTop = true
-                                  restoreState = true
-                              }
-                          }
-                      },
-                      floatingActionButton = {
-                          if (route == "home" || route == "journal") Pill("+ Событие") { nav.navigate("event") }
-                      }
-                  ) { pad ->
-                      NavHost(nav, startDestination = "home", modifier = Modifier.padding(pad)) {
-                          composable("home") { HomeScreen { nav.navigate("journal") { launchSingleTop = true } } }
-                          composable("journal") { SimpleScreen("ЖУРНАЛ", R.drawable.ic_journal, "Этап 2: таймлайн по датам, 40 записей, фильтры и форма события.") }
-                          composable("calendar") { SimpleScreen("КАЛЕНДАРЬ", R.drawable.ic_calendar, "Этап 4: месяц-сетка, прогнозы полива, напоминания в 18:00 МСК.") }
-                          composable("charts") { SimpleScreen("ГРАФИКИ", R.drawable.ic_chart, "Этап 3: линии PPM вход/выход, pH, столбики дельты.") }
-                          composable("menu") { MenuScreen() }
-                          composable("event") { EventScreen { nav.popBackStack() } }
-                      }
-                  }
-              }
-          }
-
-          class MainActivity : ComponentActivity() {
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  enableEdgeToEdge()
-                  super.onCreate(savedInstanceState)
-                  setContent { AppTheme { App() } }
-              }
-          }
-          EOF
-          echo "Files:"; find app -type f | wc -l
+          cp src/*.kt app/src/main/java/com/algorythmstudio/growtracker/
+          ls app/src/main/java/com/algorythmstudio/growtracker/
 
       - name: APK
         run: |
@@ -529,7 +208,8 @@ jobs:
 
       - name: Show error
         if: failure()
-        run: 'grep -E "^e: |error:|What went wrong|Caused by|Execution failed|Could not|SDK location" build.log | head -30'
+        run: |
+          grep -E "^e: |error:|What went wrong|Caused by|Execution failed|Could not" build.log | head -40
 
       - uses: actions/upload-artifact@v4
         with:
