@@ -1008,10 +1008,42 @@ jobs:
         with:
           gradle-version: '8.9'
 
+            - name: Apply fix
+        run: |
+          sed -i 's/^private fun screenModifier()/@Composable private fun screenModifier()/' app/src/main/java/com/algorythmstudio/growtracker/ui/screens/Screens.kt
+          grep -n "screenModifier" app/src/main/java/com/algorythmstudio/growtracker/ui/screens/Screens.kt
+
       - name: Assemble debug APK
-        run: gradle assembleDebug --no-daemon --stacktrace
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: Upload build log
+        if: steps.build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: warn
+
+      - name: Show real error
+        if: steps.build.outcome == 'failure'
+        run: |
+          {
+            echo "## GrowTracker: реальная причина ошибки"
+            echo '```'
+            grep -E "^e: |error:|What went wrong|Caused by:|Execution failed for task|Could not|Failed to|License for" build.log | head -n 40 || true
+            echo '```'
+            echo '```'
+            sed -n '/FAILURE:/,$p' build.log | head -n 50 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
 
       - name: Upload APK
+        if: steps.build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: GrowTracker-debug-apk
