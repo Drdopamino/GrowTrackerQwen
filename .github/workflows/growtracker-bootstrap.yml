@@ -15,7 +15,6 @@ jobs:
         run: |
           set -e
 
-          mkdir -p "$(dirname 'settings.gradle.kts')"
           cat > 'settings.gradle.kts' <<'EOF'
           pluginManagement {
               repositories {
@@ -35,7 +34,6 @@ jobs:
           include(":app")
           EOF
 
-          mkdir -p "$(dirname 'build.gradle.kts')"
           cat > 'build.gradle.kts' <<'EOF'
           plugins {
               id("com.android.application") version "8.7.3" apply false
@@ -44,7 +42,6 @@ jobs:
           }
           EOF
 
-          mkdir -p "$(dirname 'gradle.properties')"
           cat > 'gradle.properties' <<'EOF'
           org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
           org.gradle.parallel=true
@@ -54,12 +51,7 @@ jobs:
           kotlin.code.style=official
           EOF
 
-          mkdir -p "$(dirname 'app/proguard-rules.pro')"
-          cat > 'app/proguard-rules.pro' <<'EOF'
-          # Minification rules (delivery is debug APK).
-          EOF
-
-          mkdir -p "$(dirname 'app/build.gradle.kts')"
+          mkdir -p app
           cat > 'app/build.gradle.kts' <<'EOF'
           import java.io.File
 
@@ -81,11 +73,6 @@ jobs:
                   versionName = "0.1.0"
               }
 
-              buildTypes {
-                  release {
-                      isMinifyEnabled = false
-                  }
-              }
               compileOptions {
                   sourceCompatibility = JavaVersion.VERSION_17
                   targetCompatibility = JavaVersion.VERSION_17
@@ -100,8 +87,6 @@ jobs:
               implementation(bom)
               implementation("androidx.core:core-ktx:1.15.0")
               implementation("androidx.activity:activity-compose:1.9.3")
-              implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
-              implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
               implementation("androidx.navigation:navigation-compose:2.8.5")
               implementation("androidx.compose.ui:ui")
               implementation("androidx.compose.material3:material3")
@@ -112,11 +97,7 @@ jobs:
               "src/main/res/font/montserrat_variable.ttf" to
                   "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/Montserrat%5Bwght%5D.ttf",
               "src/main/res/font/spacegrotesk_variable.ttf" to
-                  "https://raw.githubusercontent.com/google/fonts/main/ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf",
-              "src/main/assets/font_licenses/Montserrat-OFL.txt" to
-                  "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/OFL.txt",
-              "src/main/assets/font_licenses/SpaceGrotesk-OFL.txt" to
-                  "https://raw.githubusercontent.com/google/fonts/main/ofl/spacegrotesk/OFL.txt"
+                  "https://raw.githubusercontent.com/google/fonts/main/ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf"
           )
 
           val fetchFonts by tasks.registering {
@@ -130,26 +111,18 @@ jobs:
                       val target = File(baseDir, path)
                       if (target.exists() && target.length() > 0) return@forEach
                       target.parentFile.mkdirs()
-                      logger.lifecycle("Downloading font/license: ${target.name}")
-                      try {
-                          val conn = java.net.URI(url).toURL().openConnection() as java.net.HttpURLConnection
-                          conn.connectTimeout = 30_000
-                          conn.readTimeout = 60_000
-                          conn.instanceFollowRedirects = true
-                          conn.inputStream.use { input -> target.outputStream().use { out -> input.copyTo(out) } }
-                      } catch (e: Exception) {
-                          target.delete()
-                          throw GradleException(
-                              "Failed to download ${target.name}. Fetch manually: $url -> $path. Error: ${e.message}"
-                          )
-                      }
+                      logger.lifecycle("Downloading font: ${target.name}")
+                      val conn = java.net.URI(url).toURL().openConnection() as java.net.HttpURLConnection
+                      conn.connectTimeout = 30000
+                      conn.readTimeout = 60000
+                      conn.inputStream.use { input -> target.outputStream().use { out -> input.copyTo(out) } }
                   }
               }
           }
           tasks.named("preBuild") { dependsOn(fetchFonts) }
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/AndroidManifest.xml')"
+          mkdir -p app/src/main
           cat > 'app/src/main/AndroidManifest.xml' <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -180,7 +153,7 @@ jobs:
           </manifest>
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/res/values/colors.xml')"
+          mkdir -p app/src/main/res/values
           cat > 'app/src/main/res/values/colors.xml' <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -189,7 +162,6 @@ jobs:
           </resources>
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/res/values/strings.xml')"
           cat > 'app/src/main/res/values/strings.xml' <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -197,7 +169,6 @@ jobs:
           </resources>
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/res/values/themes.xml')"
           cat > 'app/src/main/res/values/themes.xml' <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -210,7 +181,7 @@ jobs:
           </resources>
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/res/font/montserrat.xml')"
+          mkdir -p app/src/main/res/font
           cat > 'app/src/main/res/font/montserrat.xml' <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <font-family xmlns:android="http://schemas.android.com/apk/res/android">
@@ -225,7 +196,6 @@ jobs:
           </font-family>
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/res/font/cy_grotesk_grand.xml')"
           cat > 'app/src/main/res/font/cy_grotesk_grand.xml' <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <font-family xmlns:android="http://schemas.android.com/apk/res/android">
@@ -234,7 +204,7 @@ jobs:
           </font-family>
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml')"
+          mkdir -p app/src/main/res/mipmap-anydpi-v26
           cat > 'app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml' <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
@@ -244,7 +214,6 @@ jobs:
           </adaptive-icon>
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml')"
           cat > 'app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml' <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
@@ -254,7 +223,7 @@ jobs:
           </adaptive-icon>
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/res/drawable/ic_launcher_foreground.xml')"
+          mkdir -p app/src/main/res/drawable
           cat > 'app/src/main/res/drawable/ic_launcher_foreground.xml' <<'EOF'
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
               android:width="108dp" android:height="108dp"
@@ -268,40 +237,11 @@ jobs:
           </vector>
           EOF
 
-          mkdir -p "$(dirname 'README_RU.md')"
-          cat > 'README_RU.md' <<'EOF'
-          # GrowTracker
+          mkdir -p app/src/main/java/com/algorythmstudio/growtracker/ui/theme
+          mkdir -p app/src/main/java/com/algorythmstudio/growtracker/ui/components
+          mkdir -p app/src/main/java/com/algorythmstudio/growtracker/ui/navigation
+          mkdir -p app/src/main/java/com/algorythmstudio/growtracker/ui/screens
 
-          Офлайн-трекер поливов, питания и стадий роста. Android 8.0+, тёмная тема, русский интерфейс.
-          Algorythm Studio. Поставка — APK. Всё бесплатно.
-
-          ## Как получить APK
-          1. Вкладка Actions -> запуск GrowTracker Setup -> дождись зелёной галочки.
-          2. Внизу Artifacts -> скачай GrowTracker-debug-apk (zip).
-          3. Распакуй -> app-debug.apk -> на телефон -> открой -> разреши установку -> Установить.
-
-          ## Как обновлять приложение
-          Весь проект хранится внутри файла .github/workflows/growtracker-bootstrap.yml.
-          Разработчик даёт новую версию этого файла: открыть -> карандаш -> Ctrl+A -> Delete ->
-          вставить новый текст -> Commit changes. Сборка запускается автоматически.
-
-          ## Решения
-          - Пакет com.algorythmstudio.growtracker; AGP 8.7.3 / Gradle 8.9 / Kotlin 2.0.21 / JDK 17;
-            Compose BOM 2024.12.01; compileSdk 35, minSdk 26, targetSdk 35.
-          - Шрифты качаются при сборке и пакуются в APK -> приложение работает офлайн.
-            Заголовки: токен cy_grotesk_grand = Space Grotesk Bold (OFL, замена коммерческого
-            Cy Grotesk Grand). Текст: Montserrat (OFL). Лицензии в assets/font_licenses.
-          - Проект не коммитится в репозиторий: GitHub запрещает боту менять workflow-файлы.
-            Сборщик разворачивает проект во временной папке и сразу собирает APK.
-          - allowBackup=false: бэкап только фирменным .growback-файлом (этап 6), без облаков.
-          - Год seed-событий: 2026; если дата устройства раньше 01.10.2026 — 2025 (этап 2).
-
-          ## Этапы
-          1 каркас [x] | 2 база+журнал | 3 дашборд+графики | 4 календарь+напоминания
-          5 калькулятор+каталог+дневник | 6 бэкап+настройки | 7 ИИ | 8 приёмка
-          EOF
-
-          mkdir -p "$(dirname 'app/src/main/java/com/algorythmstudio/growtracker/MainActivity.kt')"
           cat > 'app/src/main/java/com/algorythmstudio/growtracker/MainActivity.kt' <<'EOF'
           package com.algorythmstudio.growtracker
 
@@ -325,7 +265,6 @@ jobs:
           }
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/java/com/algorythmstudio/growtracker/ui/theme/Color.kt')"
           cat > 'app/src/main/java/com/algorythmstudio/growtracker/ui/theme/Color.kt' <<'EOF'
           package com.algorythmstudio.growtracker.ui.theme
 
@@ -347,7 +286,6 @@ jobs:
           }
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/java/com/algorythmstudio/growtracker/ui/theme/Type.kt')"
           cat > 'app/src/main/java/com/algorythmstudio/growtracker/ui/theme/Type.kt' <<'EOF'
           package com.algorythmstudio.growtracker.ui.theme
 
@@ -395,7 +333,6 @@ jobs:
               fontSize = 26.sp, lineHeight = 30.sp)
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/java/com/algorythmstudio/growtracker/ui/theme/Theme.kt')"
           cat > 'app/src/main/java/com/algorythmstudio/growtracker/ui/theme/Theme.kt' <<'EOF'
           package com.algorythmstudio.growtracker.ui.theme
 
@@ -440,7 +377,6 @@ jobs:
           }
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/java/com/algorythmstudio/growtracker/ui/components/Components.kt')"
           cat > 'app/src/main/java/com/algorythmstudio/growtracker/ui/components/Components.kt' <<'EOF'
           package com.algorythmstudio.growtracker.ui.components
 
@@ -634,7 +570,6 @@ jobs:
           }
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/java/com/algorythmstudio/growtracker/ui/navigation/Navigation.kt')"
           cat > 'app/src/main/java/com/algorythmstudio/growtracker/ui/navigation/Navigation.kt' <<'EOF'
           package com.algorythmstudio.growtracker.ui.navigation
 
@@ -763,7 +698,6 @@ jobs:
           }
           EOF
 
-          mkdir -p "$(dirname 'app/src/main/java/com/algorythmstudio/growtracker/ui/screens/Screens.kt')"
           cat > 'app/src/main/java/com/algorythmstudio/growtracker/ui/screens/Screens.kt' <<'EOF'
           package com.algorythmstudio.growtracker.ui.screens
 
@@ -808,10 +742,13 @@ jobs:
               return { Toast.makeText(ctx, "Раздел подключается на этапе $stage", Toast.LENGTH_SHORT).show() }
           }
 
-          @Composable private fun screenModifier() = Modifier
-              .fillMaxSize()
-              .verticalScroll(rememberScrollState())
-              .padding(horizontal = 16.dp)
+          @Composable
+          private fun screenModifier(): Modifier {
+              return Modifier
+                  .fillMaxSize()
+                  .verticalScroll(rememberScrollState())
+                  .padding(horizontal = 16.dp)
+          }
 
           @Composable
           fun HomeScreen(onSeeAll: () -> Unit) {
@@ -953,7 +890,7 @@ jobs:
                   EmptyState(
                       R.drawable.ic_flask,
                       "Форма события — этап 2",
-                      "Здесь появятся: тип, растение, объём, PPM↔EC, pH, живой дельта-бейдж, удобрения и фото."
+                      "Здесь появятся: тип, растение, объём, PPM и EC, pH, живой дельта-бейдж, удобрения и фото."
                   )
                   Spacer(Modifier.height(24.dp))
               }
@@ -995,7 +932,8 @@ jobs:
           icon ic_close 'M6,6 L18,18 M18,6 L6,18'
           icon ic_search 'M10.8,4.6 A6.2,6.2 0 1 0 10.8,17 A6.2,6.2 0 1 0 10.8,4.6 M15.3,15.3 L19.6,19.6'
 
-          echo "Generated files: $(find . -type f -not -path './.git/*' | wc -l)"
+          echo "Files created:"
+          find app -type f | wc -l
 
       - name: JDK 17
         uses: actions/setup-java@v4
@@ -1008,11 +946,6 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Apply fix
-        run: |
-          sed -i 's/^private fun screenModifier()/@Composable private fun screenModifier()/' app/src/main/java/com/algorythmstudio/growtracker/ui/screens/Screens.kt
-          grep -n "screenModifier" app/src/main/java/com/algorythmstudio/growtracker/ui/screens/Screens.kt
-
       - name: Assemble debug APK
         id: build
         continue-on-error: true
@@ -1020,32 +953,13 @@ jobs:
           set -o pipefail
           gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
 
-      - name: Upload build log
-        if: steps.build.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
-          if-no-files-found: warn
-
       - name: Show real error
         if: steps.build.outcome == 'failure'
         run: |
           {
-            echo "## GrowTracker: реальная причина ошибки"
+            echo "## GrowTracker: real error"
             echo '```'
             grep -E "^e: |error:|What went wrong|Caused by:|Execution failed for task|Could not|Failed to|License for" build.log | head -n 40 || true
             echo '```'
             echo '```'
-            sed -n '/FAILURE:/,$p' build.log | head -n 50 || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
-
-      - name: Upload APK
-        if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: GrowTracker-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+            sed -n '/FAILURE:/,$p' build.log | head -n 5
